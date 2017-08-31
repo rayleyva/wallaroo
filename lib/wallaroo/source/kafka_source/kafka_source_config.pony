@@ -16,40 +16,54 @@ class val KafkaSourceConfigError
 
 
 primitive KafkaSourceConfigFactory
-  fun apply(kafka_topic: String,
-    kafka_brokers: Array[(String, I32)] val,
-    kafka_log_level: String,
-    out: OutStream):
+  fun apply(ksco: KafkaSourceConfigOptions val):
     (KafkaConfig val | KafkaSourceConfigError)
   =>
-    let log_level = match kafka_log_level
+    let log_level = match ksco.kafka_log_level
       | "Fine" => Fine
       | "Info" => Info
       | "Warn" => Warn
       | "Error" => Error
       else
-        return KafkaSourceConfigError("Error! Invalid kafka_source_log_level: " + kafka_log_level)
+        return KafkaSourceConfigError("Error! Invalid kafka_source_log_level: "
+          + ksco.kafka_log_level)
       end
 
-    if (kafka_brokers.size() == 0) or (kafka_topic == "") then
-      KafkaSourceConfigError("Error! Either brokers is empty or topics is empty!")
+    if (ksco.kafka_brokers.size() == 0) or (ksco.kafka_topic == "") then
+      KafkaSourceConfigError(
+        "Error! Either brokers is empty or topics is empty!")
     end
 
     recover
-      let logger = StringLogger(log_level, out)
+      let logger = StringLogger(log_level, ksco.out)
 
-      let kc = KafkaConfig(logger, "Kafka Wallaroo Source " + kafka_topic)
+      let kc = KafkaConfig(logger, "Kafka Wallaroo Source " + ksco.kafka_topic)
 
       // add topic config to consumer
-      kc.add_topic_config(kafka_topic, KafkaConsumeOnly)
+      kc.add_topic_config(ksco.kafka_topic, KafkaConsumeOnly)
 
-      for (host, port) in kafka_brokers.values() do
+      for (host, port) in ksco.kafka_brokers.values() do
         kc.add_broker(host, port)
       end
 
       kc
     end
 
+class KafkaSourceConfigOptions
+  let kafka_topic: String
+  let kafka_brokers: Array[(String, I32)] val
+  let kafka_log_level: String
+  let out: OutStream
+
+  new val create(kafka_topic': String,
+    kafka_brokers': Array[(String, I32)] val,
+    kafka_log_level': String,
+    out': OutStream)
+  =>
+    kafka_topic = kafka_topic'
+    kafka_brokers = kafka_brokers'
+    kafka_log_level = kafka_log_level'
+    out = out'
 
 primitive KafkaSourceConfigCLIParser
   fun opts(): Array[(String, (None | String), ArgumentType,
@@ -85,7 +99,9 @@ primitive KafkaSourceConfigCLIParser
         + help)
     end
 
-  fun apply(args: Array[String] val, out: OutStream): KafkaConfig val ? =>
+  fun apply(args: Array[String] val, out: OutStream):
+    KafkaSourceConfigOptions val ?
+  =>
     var log_level = "Warn"
 
     var topic = ""
@@ -109,15 +125,7 @@ primitive KafkaSourceConfigCLIParser
       end
     end
 
-    match KafkaSourceConfigFactory(topic, brokers, log_level, out)
-    | let kc: KafkaConfig val =>
-      kc
-    | let e: KafkaSourceConfigError =>
-      @printf[U32]("%s\n".cstring(), e.message().cstring())
-      error
-    else
-      error
-    end
+    KafkaSourceConfigOptions(topic, brokers, log_level, out)
 
   fun _brokers_from_input_string(inputs: String): Array[(String, I32)] val ? =>
     let brokers = recover trn Array[(String, I32)] end
@@ -142,20 +150,20 @@ primitive KafkaSourceConfigCLIParser
 
 
 class val KafkaSourceConfig[In: Any val] is SourceConfig[In]
-  let _conf: KafkaConfig val
+  let _ksco: KafkaSourceConfigOptions val
   let _auth: TCPConnectionAuth
   let _handler: SourceHandler[In] val
 
-  new val create(conf: KafkaConfig val, auth: TCPConnectionAuth,
+  new val create(ksco: KafkaSourceConfigOptions val, auth: TCPConnectionAuth,
     handler: SourceHandler[In] val)
   =>
     _handler = handler
     _auth = auth
-    _conf = conf
+    _ksco = ksco
 
   fun source_listener_builder_builder(): KafkaSourceListenerBuilderBuilder[In]
   =>
-    KafkaSourceListenerBuilderBuilder[In](_conf, _auth)
+    KafkaSourceListenerBuilderBuilder[In](_ksco, _auth)
 
   fun source_builder(app_name: String, name: String):
     KafkaSourceBuilderBuilder[In]

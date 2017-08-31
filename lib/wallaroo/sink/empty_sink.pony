@@ -49,3 +49,6 @@ actor EmptySink is Consumer
     None
 
   be receive_state(state: ByteSeq val) => Fail()
+
+  be dispose() =>
+    None
