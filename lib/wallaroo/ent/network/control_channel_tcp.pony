@@ -147,8 +147,7 @@ class ControlChannelConnectNotifier is TCPConnectionNotify
   fun ref accepted(conn: TCPConnection ref) =>
     conn.expect(4)
 
-  fun ref received(conn: TCPConnection ref, data: Array[U8] iso,
-    n: USize): Bool
+  fun ref received(conn: TCPConnection ref, data: Array[U8] iso): Bool
   =>
     if _header then
       try
@@ -355,8 +354,7 @@ class ControlSenderConnectNotifier is TCPConnectionNotify
     conn.expect(4)
     _header = true
 
-  fun ref received(conn: TCPConnection ref, data: Array[U8] iso,
-    n: USize): Bool
+  fun ref received(conn: TCPConnection ref, data: Array[U8] iso): Bool
   =>
     true
 
@@ -381,8 +379,7 @@ class JoiningControlSenderConnectNotifier is TCPConnectionNotify
     conn.expect(4)
     _header = true
 
-  fun ref received(conn: TCPConnection ref, data: Array[U8] iso,
-    n: USize): Bool
+  fun ref received(conn: TCPConnection ref, data: Array[U8] iso): Bool
   =>
     if _header then
       try

@@ -132,8 +132,7 @@ class DagonNotify is TCPConnectionNotify
   fun ref accepted(conn: TCPConnection ref) =>
     _env.out.print("Dagon accepted connection")
 
-  fun ref received(conn: TCPConnection ref, data: Array[U8] iso,
-    n: USize): Bool
+  fun ref received(conn: TCPConnection ref, data: Array[U8] iso): Bool
   =>
     // parse Dagon command
     for chunked in _framer.chunk(consume data).values() do

@@ -40,8 +40,7 @@ class JoiningConnectNotifier is TCPConnectionNotify
   fun ref connected(conn: TCPConnection ref) =>
     None
 
-  fun ref received(conn: TCPConnection ref, data: Array[U8] iso,
-    n: USize): Bool
+  fun ref received(conn: TCPConnection ref, data: Array[U8] iso): Bool
   =>
     true
 

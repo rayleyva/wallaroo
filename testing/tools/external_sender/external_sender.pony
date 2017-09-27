@@ -91,7 +91,6 @@ class ExternalSenderConnectNotifier is TCPConnectionNotify
     @printf[I32]("Sent message!\n".cstring())
     conn.dispose()
 
-  fun ref received(conn: TCPConnection ref, data: Array[U8] iso,
-    n: USize): Bool
+  fun ref received(conn: TCPConnection ref, data: Array[U8] iso): Bool
   =>
     true

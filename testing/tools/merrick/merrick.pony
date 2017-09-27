@@ -187,8 +187,7 @@ class FromWallarooNotify is TCPConnectionNotify
     _forward = forward
     _forwarding_actor = forwarding_actor
 
-  fun ref received(conn: TCPConnection ref, data: Array[U8] iso,
-    n: USize): Bool
+  fun ref received(conn: TCPConnection ref, data: Array[U8] iso): Bool
   =>
     if _header then
       try
@@ -232,8 +231,7 @@ class ToDagonNotify is TCPConnectionNotify
     sock.expect(4)
     _coordinator.to_dagon_socket(sock, Ready)
 
-  fun ref received(conn: TCPConnection ref, data: Array[U8] iso,
-    n: USize): Bool
+  fun ref received(conn: TCPConnection ref, data: Array[U8] iso): Bool
   =>
     if _header then
       try
