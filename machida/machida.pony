@@ -18,15 +18,12 @@ Copyright 2017 The Wallaroo Authors.
 
 use "collections"
 use "buffered"
-use "pony-kafka"
 use "net"
 
 use "wallaroo"
 use "wallaroo/core/sink"
-use "wallaroo/core/sink/kafka_sink"
 use "wallaroo/core/sink/tcp_sink"
 use "wallaroo/core/source"
-use "wallaroo/core/source/kafka_source"
 use "wallaroo/core/source/tcp_source"
 use "wallaroo/core/topology"
 use "wallaroo/core/state"
@@ -433,52 +430,6 @@ class PyTCPEncoder is TCPSinkEncoder[PyData val]
       wb.write(arr)
     end
     wb.done()
-
-  fun _serialise_space(): USize =>
-    Machida.user_serialization_get_size(_sink_encoder)
-
-  fun _serialise(bytes: Pointer[U8] tag) =>
-    Machida.user_serialization(_sink_encoder, bytes)
-
-  fun ref _deserialise(bytes: Pointer[U8] tag) =>
-    _sink_encoder = recover Machida.user_deserialization(bytes) end
-
-  fun _final() =>
-    Machida.dec_ref(_sink_encoder)
-
-class PyKafkaEncoder is KafkaSinkEncoder[PyData val]
-  var _sink_encoder: Pointer[U8] val
-
-  new create(sink_encoder: Pointer[U8] val) =>
-    _sink_encoder = sink_encoder
-
-  fun apply(data: PyData val, wb: Writer):
-    (Array[ByteSeq] val, (Array[ByteSeq] val | None))
-  =>
-    let out_and_key = Machida.sink_encoder_encode(_sink_encoder, data.obj())
-    // `out_and_key` is a tuple of `(out, key)`, where `out` is a
-    // string and key is `None` or a string.
-    let out_p = @PyTuple_GetItem(out_and_key, 0)
-    let key_p = @PyTuple_GetItem(out_and_key, 1)
-
-    let out = wb.>write(recover val
-        // create a temporary Array[U8] wrapper for the C array, then clone it
-        Array[U8].from_cpointer(@PyString_AsString(out_p),
-          @PyString_Size(out_p)).clone()
-      end).done()
-
-    let key = if Machida.is_py_none(key_p) then
-        None
-      else
-        wb.>write(recover
-          Array[U8].from_cpointer(@PyString_AsString(out_p),
-            @PyString_Size(out_p)).clone()
-          end).done()
-      end
-
-    Machida.dec_ref(out_and_key)
-
-    (consume out, consume key)
 
   fun _serialise_space(): USize =>
     Machida.user_serialization_get_size(_sink_encoder)
@@ -919,54 +870,6 @@ primitive _SourceConfig
       end
 
       TCPSourceConfig[PyData val](decoder, host, port)
-    | "kafka" =>
-      let conf = _kafka_config(source_config_tuple, env.out)
-
-      let decoder = recover val
-        let d = @PyTuple_GetItem(source_config_tuple, 4)
-        Machida.inc_ref(d)
-        PySourceHandler(d)
-      end
-
-      KafkaSourceConfig[PyData val](conf, (env.root as TCPConnectionAuth), decoder)
-    else
-      error
-    end
-
-  fun _kafka_config(source_config_tuple: Pointer[U8] val, out: OutStream): KafkaConfig val ? =>
-    let topic = recover val
-      String.copy_cstring(@PyString_AsString(@PyTuple_GetItem(source_config_tuple, 1)))
-    end
-
-    let brokers_list = @PyTuple_GetItem(source_config_tuple, 2)
-
-    let brokers = recover val
-      let num_brokers = @PyList_Size(brokers_list)
-      let brokers' = Array[(String, I32)](num_brokers)
-
-      for i in Range(0, num_brokers) do
-        let broker = @PyList_GetItem(brokers_list, i)
-        let host = recover val String.copy_cstring(@PyString_AsString(@PyTuple_GetItem(broker, 0))) end
-        let port = try
-          String.copy_cstring(@PyString_AsString(@PyTuple_GetItem(broker, 1))).i32()
-        else
-          9092
-        end
-        brokers'.push((host, port))
-      end
-      brokers'
-    end
-
-    let log_level = recover val
-      String.copy_cstring(@PyString_AsString(@PyTuple_GetItem(source_config_tuple, 3)))
-    end
-
-    match KafkaSourceConfigFactory(topic, brokers, log_level, out)
-    | let conf: KafkaConfig val =>
-      conf
-    | let kce: KafkaSourceConfigError =>
-      @printf[U32]("%s\n".cstring(), kce.message().cstring())
-      error
     else
       error
     end
@@ -996,58 +899,6 @@ primitive _SinkConfig
       end
 
       TCPSinkConfig[PyData val](encoder, host, port)
-    | "kafka" =>
-      let conf = _kafka_config(sink_config_tuple, env.out)
-
-      let encoderp = @PyTuple_GetItem(sink_config_tuple, 6)
-      Machida.inc_ref(encoderp)
-      let encoder = recover val
-        PyKafkaEncoder(encoderp)
-      end
-
-      KafkaSinkConfig[PyData val](encoder, conf, (env.root as TCPConnectionAuth))
-    else
-      error
-    end
-
-  fun _kafka_config(source_config_tuple: Pointer[U8] val, out: OutStream): KafkaConfig val ? =>
-    let topic = recover val
-      String.copy_cstring(@PyString_AsString(@PyTuple_GetItem(source_config_tuple, 1)))
-    end
-
-    let brokers_list = @PyTuple_GetItem(source_config_tuple, 2)
-
-    let brokers = recover val
-      let num_brokers = @PyList_Size(brokers_list)
-      let brokers' = Array[(String, I32)](num_brokers)
-
-      for i in Range(0, num_brokers) do
-        let broker = @PyList_GetItem(brokers_list, i)
-        let host = recover val String.copy_cstring(@PyString_AsString(@PyTuple_GetItem(broker, 0))) end
-        let port = try
-          String.copy_cstring(@PyString_AsString(@PyTuple_GetItem(broker, 1))).i32()
-        else
-          9092
-        end
-        brokers'.push((host, port))
-      end
-      brokers'
-    end
-
-    let log_level = recover val
-      String.copy_cstring(@PyString_AsString(@PyTuple_GetItem(source_config_tuple, 3)))
-    end
-
-    let max_produce_buffer_ms = @PyInt_AsLong(@PyTuple_GetItem(source_config_tuple, 4)).u64()
-
-    let max_message_size = @PyInt_AsLong(@PyTuple_GetItem(source_config_tuple, 5)).i32()
-
-    match KafkaSinkConfigFactory(topic, brokers, log_level, max_produce_buffer_ms, max_message_size, out)
-    | let conf: KafkaConfig val =>
-      conf
-    | let kce: KafkaSinkConfigError =>
-      @printf[U32]("%s\n".cstring(), kce.message().cstring())
-      error
     else
       error
     end
