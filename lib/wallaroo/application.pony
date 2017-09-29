@@ -50,7 +50,7 @@ class Application
     source_config: SourceConfig[In]): PipelineBuilder[In, Out, In]
   =>
     // We have removed the ability to turn coalescing off at the command line.
-    let coalescing = true
+    let coalescing = false
     let pipeline_id = pipelines.size()
     let pipeline = Pipeline[In, Out](_name, pipeline_id, pipeline_name,
       source_config, coalescing)
