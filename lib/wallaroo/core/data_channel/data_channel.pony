@@ -496,7 +496,7 @@ actor DataChannel
     """
     ifdef not windows then
       // TODO: Make writev_batch_size user configurable
-      let writev_batch_size: USize = @pony_os_writev_max[I32]().usize()
+      let writev_batch_size: USize = 1024
       var num_to_send: USize = 0
       var bytes_to_send: USize = 0
       while _writeable and not _shutdown_peer
@@ -518,7 +518,7 @@ actor DataChannel
           end
 
           // Write as much data as possible.
-          var len = @pony_os_writev[USize](_event,
+          var len = @writev[USize](_event,
             _pending_writev.cpointer(), num_to_send) ?
 
           if len < bytes_to_send then
