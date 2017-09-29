@@ -247,7 +247,6 @@ primitive UpdateNbbo is StateComputation[FixNbboMessage val, None, SymbolData]
     recover val
       let scbs = Array[StateChangeBuilder[SymbolData]]
       scbs.push(recover val SymbolDataStateChangeBuilder end)
-      scbs
     end
 
 class CheckOrder is StateComputation[FixOrderMessage val, OrderResult val,

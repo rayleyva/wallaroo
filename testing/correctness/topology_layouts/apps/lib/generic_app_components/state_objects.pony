@@ -89,7 +89,6 @@ primitive UpdateU64Counter is StateComputation[U64, U64, U64Counter]
     recover val
       let scbs = Array[StateChangeBuilder[U64Counter]]
       scbs.push(recover val U64CounterStateChangeBuilder end)
-      scbs
     end
 
 primitive UpdateU64Counter2 is StateComputation[U64, U64, U64Counter]
@@ -116,5 +115,4 @@ primitive UpdateU64Counter2 is StateComputation[U64, U64, U64Counter]
     recover val
       let scbs = Array[StateChangeBuilder[U64Counter]]
       scbs.push(recover val U64CounterStateChangeBuilder end)
-      scbs
     end

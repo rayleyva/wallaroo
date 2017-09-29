@@ -210,7 +210,6 @@ primitive ProcessNbbo is StateComputation[FixNbboMessage val, NbboResult val,
     recover val
       let scbs = Array[StateChangeBuilder[SymbolData]]
       scbs.push(recover val SymbolDataStateChangeBuilder end)
-      scbs
     end
 
 primitive FixNbboFrameHandler is FramedSourceHandler[FixNbboMessage val]

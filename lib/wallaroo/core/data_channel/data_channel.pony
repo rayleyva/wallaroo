@@ -84,7 +84,7 @@ actor DataChannel
     Connect via IPv4 or IPv6. If `from` is a non-empty string, the connection
     will be made from the specified interface.
     """
-    _read_buf = recover Array[U8].>undefined(init_size) end
+    _read_buf = recover Array[U8].undefined(init_size) end
     _next_size = init_size
     _max_size = max_size
     _notify = consume notify
@@ -100,7 +100,7 @@ actor DataChannel
     """
     Connect via IPv4.
     """
-    _read_buf = recover Array[U8].>undefined(init_size) end
+    _read_buf = recover Array[U8].undefined(init_size) end
     _next_size = init_size
     _max_size = max_size
     _notify = consume notify
@@ -116,7 +116,7 @@ actor DataChannel
     """
     Connect via IPv6.
     """
-    _read_buf = recover Array[U8].>undefined(init_size) end
+    _read_buf = recover Array[U8].undefined(init_size) end
     _next_size = init_size
     _max_size = max_size
     _notify = consume notify
@@ -147,7 +147,7 @@ actor DataChannel
       @pony_asio_event_set_writeable[None](_event, true)
     end
     _writeable = true
-    _read_buf = recover Array[U8].>undefined(init_size) end
+    _read_buf = recover Array[U8].undefined(init_size) end
     _next_size = init_size
     _max_size = max_size
 
@@ -180,7 +180,7 @@ actor DataChannel
     Do nothing on windows.
     """
     ifdef not windows then
-      _pending_writev.>push(data.cpointer().usize()).>push(data.size())
+      _pending_writev.push(data.cpointer().usize()).push(data.size())
       _pending_writev_total = _pending_writev_total + data.size()
       _pending.push((data, 0))
     end
@@ -199,7 +199,7 @@ actor DataChannel
         end
       else
         for bytes in _notify.sentv(this, data).values() do
-          _pending_writev.>push(bytes.cpointer().usize()).>push(bytes.size())
+          _pending_writev.push(bytes.cpointer().usize()).push(bytes.size())
           _pending_writev_total = _pending_writev_total + bytes.size()
           _pending.push((bytes, 0))
         end
@@ -218,7 +218,7 @@ actor DataChannel
 
     ifdef not windows then
       for bytes in _notify.sentv(this, data).values() do
-        _pending_writev.>push(bytes.cpointer().usize()).>push(bytes.size())
+        _pending_writev.push(bytes.cpointer().usize()).push(bytes.size())
         _pending_writev_total = _pending_writev_total + bytes.size()
         _pending.push((bytes, 0))
       end
@@ -442,7 +442,7 @@ actor DataChannel
           end
         end
       else
-        _pending_writev.>push(data.cpointer().usize()).>push(data.size())
+        _pending_writev.push(data.cpointer().usize()).push(data.size())
         _pending_writev_total = _pending_writev_total + data.size()
         _pending.push((data, 0))
         _pending_writes()

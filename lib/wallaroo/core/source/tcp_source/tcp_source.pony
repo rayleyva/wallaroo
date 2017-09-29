@@ -118,7 +118,7 @@ actor TCPSource is Producer
         AsioEvent.read_write(), 0, true, false)
     end
     _connected = true
-    _read_buf = recover Array[U8].>undefined(init_size) end
+    _read_buf = recover Array[U8].undefined(init_size) end
     _next_size = init_size
     _max_size = max_size
 

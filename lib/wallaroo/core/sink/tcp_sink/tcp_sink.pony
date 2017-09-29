@@ -137,7 +137,7 @@ actor TCPSink is Consumer
     """
     _encoder = encoder_wrapper
     _metrics_reporter = consume metrics_reporter
-    _read_buf = recover Array[U8].>undefined(init_size) end
+    _read_buf = recover Array[U8].undefined(init_size) end
     _next_size = init_size
     _max_size = max_size
     _notify = TCPSinkNotify
@@ -425,7 +425,7 @@ actor TCPSink is Consumer
 
     var data_size: USize = 0
     for bytes in _notify.sentv(this, data).values() do
-      _pending_writev.>push(bytes.cpointer().usize()).>push(bytes.size())
+      _pending_writev.push(bytes.cpointer().usize()).push(bytes.size())
       _pending_writev_total = _pending_writev_total + bytes.size()
       _pending.push((bytes, 0))
       data_size = data_size + bytes.size()
@@ -448,7 +448,7 @@ actor TCPSink is Consumer
     everything was written. On an error, close the connection. This is for
     data that has already been transformed by the notifier.
     """
-    _pending_writev.>push(data.cpointer().usize()).>push(data.size())
+    _pending_writev.push(data.cpointer().usize()).push(data.size())
     _pending_writev_total = _pending_writev_total + data.size()
     ifdef "resilience" then
       match tracking_id
