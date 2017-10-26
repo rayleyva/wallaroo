@@ -41,13 +41,13 @@ while True:
 # Sort on counts
 processed = sorted(received, key=lambda x: x[0])  # sort on count
 # Pick top 3 and sort on partition key (mod 6)
-processed2 = sorted(processed[-3:], key=lambda x: x[1] % 3)
+processed2 = sorted(processed[-3:], key=lambda x: x[1] % 6)
 
 # We'll just repeat the compuation to derive the correct results:
 maxes = [0, 0, 0]
 counts = [0, 0, 0]
 for v in range(1, args.n+1):
-    i = v % 3  # partition mod 6
+    i = v % 3  # partition mod 3
     maxes[i] = v*2   # set max for partition to double v
     counts[i] += 1  # set count for partition
 
